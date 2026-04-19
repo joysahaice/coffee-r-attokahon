@@ -464,6 +464,17 @@ let cart = {};
 let menuCat = 'all';
 let orderCounter = parseInt(localStorage.getItem('ca_oid') || '1');
 
+/* ── AUTO-DETECT TABLE FROM QR CODE URL ────────────────────────── */
+const _urlTable = parseInt(new URLSearchParams(window.location.search).get('table'));
+if (_urlTable && _urlTable >= 1 && _urlTable <= 20) {
+  tableNum = _urlTable;
+  document.getElementById('tableScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  document.getElementById('tableChip').textContent = `📍 Table ${tableNum}`;
+  renderCatBar();
+  renderMenuGrid();
+}
+
 /* ── TABLE GRID ────────────────────────────────────────────────── */
 const grid = document.getElementById('tableGrid');
 for (let i = 1; i <= 20; i++) {
