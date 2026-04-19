@@ -458,7 +458,7 @@ const DEMO = [
   {id:'12',name:'Avocado Toast',   cat:'Food',      price:160, emoji:'🥑', desc:'Sourdough, smashed avocado, chilli flakes.',   avail:true},
 ];
 
-window._products = DEMO;
+try { var _saved = JSON.parse(localStorage.getItem("ca_products")); window._products = (_saved && _saved.length) ? _saved.filter(function(p){return p.avail;}) : DEMO; } catch(e) { window._products = DEMO; }
 let tableNum = null;
 let cart = {};
 let menuCat = 'all';
@@ -626,6 +626,14 @@ function newOrder() {
   document.getElementById('menuSection').style.display = 'block';
   renderMenuGrid();
 }
+
+/* Auto-refresh menu when admin updates products in another tab */
+window.addEventListener("storage", function(e) {
+  if (e.key === "ca_products") {
+    try { var _saved = JSON.parse(e.newValue); window._products = (_saved && _saved.length) ? _saved.filter(function(p){return p.avail;}) : DEMO; } catch(err) {}
+    renderCatBar(); renderMenuGrid();
+  }
+});
 
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
