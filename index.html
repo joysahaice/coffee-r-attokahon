@@ -458,7 +458,18 @@ const DEMO = [
   {id:'12',name:'Avocado Toast',   cat:'Food',      price:160, emoji:'🥑', desc:'Sourdough, smashed avocado, chilli flakes.',   avail:true},
 ];
 
-try { var _saved = JSON.parse(localStorage.getItem("ca_products")); window._products = (_saved && _saved.length) ? _saved.filter(function(p){return p.avail;}) : DEMO; } catch(e) { window._products = DEMO; }
+try {
+  var _saved = JSON.parse(localStorage.getItem("ca_products"));
+  if (_saved && _saved.length) {
+    // Normalize avail field — admin may store as boolean or 0/1
+    window._products = _saved
+      .map(function(p){ return Object.assign({}, p, { avail: p.avail === true || p.avail === 1 || p.avail === "1" }); })
+      .filter(function(p){ return p.avail; });
+    if (!window._products.length) window._products = DEMO;
+  } else {
+    window._products = DEMO;
+  }
+} catch(e) { window._products = DEMO; }
 let tableNum = null;
 let cart = {};
 let menuCat = 'all';
@@ -525,7 +536,7 @@ function renderMenuGrid() {
   if (!items.length) { el.innerHTML = '<div class="empty-msg">No items in this category.</div>'; return; }
   el.innerHTML = items.map(p => {
     const key = p._key || p.id;
-    const inC = cart[key]?.qty || 0;
+    const inC = cart[String(key)]?.qty || 0;
     return `<div class="menu-card">
       <div class="emoji">${p.emoji || '☕'}</div>
       <div class="name">${esc(p.name)}</div>
@@ -545,17 +556,19 @@ function renderMenuGrid() {
 }
 
 function addToCart(key) {
-  const p = window._products.find(x => (x._key || x.id) === key);
-  if (!p || !p.avail) return;
-  if (!cart[key]) cart[key] = { product: p, qty: 0 };
-  cart[key].qty++;
+  const k = String(key);
+  const p = window._products.find(x => String(x._key || x.id) === k);
+  if (!p) return;
+  if (!cart[k]) cart[k] = { product: p, qty: 0 };
+  cart[k].qty++;
   updateCount();
   renderMenuGrid();
 }
 function changeQty(key, d) {
-  if (!cart[key]) return;
-  cart[key].qty += d;
-  if (cart[key].qty <= 0) delete cart[key];
+  const k = String(key);
+  if (!cart[k]) return;
+  cart[k].qty += d;
+  if (cart[k].qty <= 0) delete cart[k];
   updateCount();
   renderMenuGrid();
 }
@@ -630,7 +643,7 @@ function newOrder() {
 /* Auto-refresh menu when admin updates products in another tab */
 window.addEventListener("storage", function(e) {
   if (e.key === "ca_products") {
-    try { var _saved = JSON.parse(e.newValue); window._products = (_saved && _saved.length) ? _saved.filter(function(p){return p.avail;}) : DEMO; } catch(err) {}
+    try { var _saved = JSON.parse(e.newValue); if(_saved&&_saved.length){window._products=_saved.map(function(p){return Object.assign({},p,{avail:p.avail===true||p.avail===1||p.avail==="1"});}).filter(function(p){return p.avail;});if(!window._products.length)window._products=DEMO;}else{window._products=DEMO;} } catch(err) {}
     renderCatBar(); renderMenuGrid();
   }
 });
