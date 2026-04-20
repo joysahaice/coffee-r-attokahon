@@ -301,7 +301,13 @@ const DEF_PRODUCTS = [
 const DEF_USERS = [{username:'admin',password:'admin123',role:'admin'},{username:'chef',password:'chef123',role:'kitchen'}];
 
 /* ── STORAGE ───────────────────────────────────────────────────── */
-function getProducts(){ try{return JSON.parse(localStorage.getItem('ca_products'))||DEF_PRODUCTS;}catch{return DEF_PRODUCTS;} }
+function getProducts(){
+  try {
+    var p = JSON.parse(localStorage.getItem('ca_products'));
+    if (!p) return DEF_PRODUCTS;
+    return p.map(function(x){ return Object.assign({}, x, { avail: x.avail===true||x.avail===1||x.avail==='1', id: String(x.id||x._key) }); });
+  } catch(e) { return DEF_PRODUCTS; }
+}
 function saveProducts(p){ localStorage.setItem('ca_products',JSON.stringify(p)); }
 function getOrders()  { try{return JSON.parse(localStorage.getItem('ca_orders'))||[];}catch{return[];} }
 function getUsers()   { try{return JSON.parse(localStorage.getItem('ca_users'))||DEF_USERS;}catch{return DEF_USERS;} }
@@ -401,7 +407,7 @@ function openProductModal(id) {
   editPid = id;
   document.getElementById('prodModalTitle').textContent = id?'Edit Product':'Add Product';
   if (id) {
-    const p = getProducts().find(x=>(x.id||x._key)===id);
+    const p = getProducts().find(x=>String(x.id||x._key)===String(id));
     if(p){
       document.getElementById('pName').value=p.name;
       document.getElementById('pCat').value=p.cat;
@@ -428,7 +434,7 @@ function saveProduct() {
   const data={name,cat:document.getElementById('pCat').value,price,emoji:document.getElementById('pEmoji').value.trim()||'☕',desc:document.getElementById('pDesc').value.trim(),avail:document.getElementById('pAvail').value==='1'};
   let prods = getProducts();
   if(editPid){
-    const i=prods.findIndex(p=>(p.id||p._key)===editPid);
+    const i=prods.findIndex(p=>String(p.id||p._key)===String(editPid));
     if(i>-1) prods[i]={...prods[i],...data};
   } else {
     const maxId=prods.reduce((m,p)=>Math.max(m,parseInt(p.id||0)),0);
@@ -440,11 +446,11 @@ function saveProduct() {
 }
 
 function toggleAvail(id) {
-  const prods=getProducts(); const i=prods.findIndex(p=>(p.id||p._key)===id);
+  const prods=getProducts(); const i=prods.findIndex(p=>String(p.id||p._key)===String(id));
   if(i>-1){prods[i].avail=!prods[i].avail;saveProducts(prods);render();}
 }
 function deleteProduct(id) {
-  saveProducts(getProducts().filter(p=>(p.id||p._key)!==id));
+  saveProducts(getProducts().filter(p=>String(p.id||p._key)!==String(id)));
   render();
 }
 
